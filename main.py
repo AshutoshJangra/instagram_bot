@@ -2,11 +2,12 @@ import logging
 import os
 import random
 import sys
+import time
 from datetime import datetime
 
 import config
 from image_gen import create_post_image
-from insta_poster import check_publishing_limit, post_to_instagram
+from insta_poster import POST_DELAY, check_publishing_limit, post_to_instagram
 from onthisday_fetcher import fetch_onthisday
 from persona_writer import generate_post
 from rss_fetcher import fetch_tech_news
@@ -138,6 +139,10 @@ def main():
             print(f"Posted:  {post_type}")
         else:
             print(f"Failed:  {post_type}")
+
+        if post_type != posts_to_make[-1][0]:
+            print(f"Waiting {POST_DELAY}s before next post...")
+            time.sleep(POST_DELAY)
 
     print("\nDone.")
 

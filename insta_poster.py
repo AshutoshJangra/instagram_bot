@@ -1,5 +1,6 @@
 import logging
 import time
+from datetime import datetime
 
 import requests
 
@@ -9,7 +10,8 @@ logger = logging.getLogger(__name__)
 
 GRAPH_HOST = "https://graph.instagram.com"
 RETRY_DELAY = 60
-MAX_RETRIES = 2
+MAX_RETRIES = 0
+POST_DELAY = 120
 
 
 def check_publishing_limit():
@@ -72,6 +74,25 @@ def _upload_image(image_path):
         return None
 
 
+def _recently_posted(caption_snippet):
+    try:
+        resp = requests.get(
+            f"{GRAPH_HOST}/{config.IG_USER_ID}/media",
+            params={"fields": "id,caption,timestamp", "access_token": config.IG_ACCESS_TOKEN, "limit": 5},
+            timeout=10,
+        )
+        data = resp.json()
+        for item in data.get("data", []):
+            if caption_snippet in item.get("caption", ""):
+                age = time.time() - datetime.fromisoformat(item["timestamp"].replace("Z", "+00:00")).timestamp()
+                if age < 120:
+                    logger.info("Post already published despite error (ID: %s)", item["id"])
+                    return True
+    except Exception as e:
+        logger.debug("Recent media check failed: %s", e)
+    return False
+
+
 def post_to_instagram(article, rewritten_headline, image_path, caption_body=""):
     if config.IG_ACCESS_TOKEN == "YOUR_IG_USER_TOKEN":
         logger.error("Instagram token not configured.")
@@ -127,6 +148,9 @@ def post_to_instagram(article, rewritten_headline, image_path, caption_body=""):
             else:
                 logger.error("Publish failed: %s", pub_data)
                 print("Instagram publish failed:", pub_data)
+                if _recently_posted(caption[:60]):
+                    print("Post was published despite error. Marking success.")
+                    return True
                 time.sleep(RETRY_DELAY)
         except requests.RequestException as e:
             logger.error("Instagram API error: %s", e)
