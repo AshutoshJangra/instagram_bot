@@ -52,6 +52,9 @@ def _pick_event(events, posted):
         key = f"history_{e['year']}_{e['text'][:60]}"
         if key not in posted:
             return e, key
+    if events:
+        key = f"history_{events[0]['year']}_{events[0]['text'][:60]}"
+        return events[0], key
     return None, None
 
 
@@ -61,6 +64,9 @@ def _pick_article(articles, posted):
         key = a.get("url") or a.get("title", "")
         if key not in posted:
             return a, key
+    if articles:
+        key = articles[0].get("url") or articles[0].get("title", "")
+        return articles[0], key
     return None, None
 
 
