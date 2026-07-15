@@ -312,8 +312,8 @@ def create_post_image(article, headline=None, post_type="tech"):
     canvas = bg.copy().convert("RGBA")
     draw = ImageDraw.Draw(canvas, "RGBA")
 
-    mx = 55
-    RIGHT_MARGIN = 220
+    mx = 160
+    RIGHT_MARGIN = 140
     category = "ON THIS DAY" if post_type == "history" else "TECH"
     PANEL_Y = 482
 
