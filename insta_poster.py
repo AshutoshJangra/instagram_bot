@@ -12,6 +12,24 @@ RETRY_DELAY = 60
 MAX_RETRIES = 2
 
 
+def check_publishing_limit():
+    try:
+        resp = requests.get(
+            f"{GRAPH_HOST}/{config.IG_USER_ID}/content_publishing_limit",
+            params={"fields": "config,quota_usage", "access_token": config.IG_ACCESS_TOKEN},
+            timeout=10,
+        )
+        data = resp.json()
+        usage = data["data"][0]["quota_usage"]
+        total = data["data"][0]["config"]["quota_total"]
+        remaining = total - usage
+        logger.info("Publishing quota: %d/%d used (%d remaining)", usage, total, remaining)
+        return remaining
+    except Exception as e:
+        logger.warning("Failed to check publishing limit: %s", e)
+        return None
+
+
 def _build_caption(article, rewritten_headline, caption_body=""):
     parts = [
         rewritten_headline,

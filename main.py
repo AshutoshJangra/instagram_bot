@@ -6,7 +6,7 @@ from datetime import datetime
 
 import config
 from image_gen import create_post_image
-from insta_poster import post_to_instagram
+from insta_poster import check_publishing_limit, post_to_instagram
 from onthisday_fetcher import fetch_onthisday
 from persona_writer import generate_post
 from rss_fetcher import fetch_tech_news
@@ -102,6 +102,14 @@ def main():
     if not posts_to_make:
         print("Nothing new to post.")
         return
+
+    remaining = check_publishing_limit()
+    if remaining is not None and remaining < 1:
+        print("Publishing quota exhausted for today. Skipping.")
+        return
+    if remaining is not None and remaining < len(posts_to_make):
+        print(f"Only {remaining} post(s) remaining. Truncating queue.")
+        posts_to_make = posts_to_make[:remaining]
 
     for post_type, source, key in posts_to_make:
         print(f"\n--- Posting: {post_type.upper()} ---")
