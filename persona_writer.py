@@ -1,8 +1,19 @@
 import json
 import logging
 import random
+import re
 
 logger = logging.getLogger(__name__)
+
+
+def _truncate(text, max_len):
+    if len(text) <= max_len:
+        return text
+    truncated = text[:max_len]
+    last_space = truncated.rfind(" ")
+    if last_space >= max_len * 0.5:
+        truncated = truncated[:last_space]
+    return truncated.rstrip(",. ;-") + "..."
 
 SYSTEM_PROMPT = """You are a satirical Indian socio-political commentator. Your style blends the absurd headline energy of The Fauxy, the relatable desi humor of Nakul Dhull, and the deadpan delivery of The Onion.
 
@@ -15,7 +26,7 @@ THE VOICE:
 
 FORMAT:
 - Output ONLY valid JSON with two fields: "headline" and "caption"
-- Headline: max 55 characters, short enough to fit on an Instagram image without being cut off
+- Headline: exactly 3-6 words, max 45 characters, must fit in 2-3 lines on an image
 - Caption: 2-4 sentences. Start absurd, land the real point. Hinglish flows naturally.
 
 RULES:
@@ -27,13 +38,13 @@ RULES:
 - The satire should speak for itself — don't explain the joke
 
 EXAMPLES:
-Headline: PM launches 3 new schemes, all accidentally named after himself
+Headline: PM names 3 new schemes after himself
 Caption: 'Modi Health Yojana', 'Modi Education Yojana', and 'Modi Morning Walk Scheme' were unveiled today. Sources say the last one involves PM walking for 10 minutes while 50 cameras follow. Meanwhile, common man still needs 16 documents for a ration card. Matlab, kya bolti company?
 
-Headline: Delhi pollution so bad that even WhatsApp University has declared a holiday
+Headline: Delhi smog worse than your WhatsApp forwards
 Caption: AQI crossed 500 and government's solution is a 'Smog Eating Robot' that works only in Lutyens' Delhi. Kejriwal held a press conference, Gopal Rai tweeted 17 times, Supreme Court formed a committee. Meanwhile, Noida folks are selling 'Authentic Delhi Air' in jars for Rs 499. Joke hai bhai, pure desh ka joke.
 
-Headline: Govt to regulate memes, opposition calls it 'attack on creativity'
+Headline: Govt wants to regulate memes now
 Caption: New bill requires every meme to start with a 15-second government warning. IT Minister says "we want accountability." WhatsApp University has already found 3 loopholes and is now operating in clay pot currency. Economy in shambles."""
 
 
@@ -59,14 +70,14 @@ def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
 
 def _fallback_generation(title_text):
     templates = [
-        f"Breaking: {title_text[:50]} — seriously.",
-        f"In a shocking move, {title_text[:50].lower()}.",
-        f"{title_text[:55]} — experts say 'definitely a thing'.",
-        f"Sources confirm {title_text[:50].lower()}. Twitter is furious.",
+        f"Big news: {_truncate(title_text, 35)}.",
+        f"So {_truncate(title_text, 40).lower()}.",
+        f"Wait, {_truncate(title_text, 40).lower()}?",
+        f"Brace yourselves: {_truncate(title_text, 40)}.",
     ]
     h = random.choice(templates)
     return {
-        "headline": h[:60],
+        "headline": _truncate(h, 50),
         "caption": h + " India is the only country where the news writes itself, aur hum yahan baith ke hanste hai.",
     }
 
@@ -82,13 +93,13 @@ def _parse_response(raw, article_title):
             caption = line.split(":", 1)[1].strip()
 
     if headline and caption:
-        return {"headline": headline[:60], "caption": caption}
+        return {"headline": _truncate(headline, 50), "caption": caption}
 
     if not headline and not caption:
         try:
             result = json.loads(raw)
             return {
-                "headline": result.get("headline", article_title)[:60],
+                "headline": _truncate(result.get("headline", article_title), 50),
                 "caption": result.get("caption", raw),
             }
         except (json.JSONDecodeError, TypeError):

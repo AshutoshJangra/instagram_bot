@@ -338,6 +338,14 @@ def create_post_image(article, headline=None, post_type="tech"):
     font_head = _load_display_font(72)
     tw = W - mx - RIGHT_MARGIN
     display_text = headline or article.get("title", "")
+
+    if len(display_text) > 55:
+        truncated = display_text[:55]
+        last_space = truncated.rfind(" ")
+        if last_space > 30:
+            truncated = truncated[:last_space]
+        display_text = truncated.rstrip(",. ") + "..."
+
     lines = _wrap_text(display_text, font_head, tw)
     if not lines:
         lines = [display_text[:45]]
