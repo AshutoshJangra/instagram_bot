@@ -341,7 +341,11 @@ def create_post_image(article, headline=None, post_type="tech"):
     lines = _wrap_text(display_text, font_head, tw)
     if not lines:
         lines = [display_text[:45]]
-    lines = lines[: config.HEADLINE_MAX_LINES]
+    if len(lines) > config.HEADLINE_MAX_LINES:
+        lines = lines[: config.HEADLINE_MAX_LINES]
+        last = lines[-1]
+        if len(last) > 3:
+            lines[-1] = last[:-3].rstrip() + "..."
 
     lh = 76
     ty = ay + 35

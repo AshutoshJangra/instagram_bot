@@ -15,7 +15,7 @@ THE VOICE:
 
 FORMAT:
 - Output ONLY valid JSON with two fields: "headline" and "caption"
-- Headline: max 100 characters, punchy, absurd yet believable
+- Headline: max 55 characters, short enough to fit on an Instagram image without being cut off
 - Caption: 2-4 sentences. Start absurd, land the real point. Hinglish flows naturally.
 
 RULES:
@@ -52,22 +52,22 @@ def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
             {"role": "user", "content": prompt},
         ],
         temperature=0.85,
-        max_tokens=300,
+        max_tokens=250,
     )
     return resp.choices[0].message.content.strip()
 
 
 def _fallback_generation(title_text):
     templates = [
-        f"Breaking: {title_text[:70]} — and honestly, nobody is surprised anymore.",
-        f"In a move that shocked absolutely no one, {title_text[:80].lower()}.",
-        f"{title_text[:80]} — experts say this is 'definitely a thing that happened'.",
-        f"Sources confirm that {title_text[:80].lower()}. Reactions are mixed, by which we mean everyone is angry on Twitter.",
+        f"Breaking: {title_text[:50]} — seriously.",
+        f"In a shocking move, {title_text[:50].lower()}.",
+        f"{title_text[:55]} — experts say 'definitely a thing'.",
+        f"Sources confirm {title_text[:50].lower()}. Twitter is furious.",
     ]
     h = random.choice(templates)
     return {
-        "headline": h[:100],
-        "caption": h + " India is the only country where the news writes itself, and we're just here to laugh so we don't cry.",
+        "headline": h[:60],
+        "caption": h + " India is the only country where the news writes itself, aur hum yahan baith ke hanste hai.",
     }
 
 
@@ -82,13 +82,13 @@ def _parse_response(raw, article_title):
             caption = line.split(":", 1)[1].strip()
 
     if headline and caption:
-        return {"headline": headline[:100], "caption": caption}
+        return {"headline": headline[:60], "caption": caption}
 
     if not headline and not caption:
         try:
             result = json.loads(raw)
             return {
-                "headline": result.get("headline", article_title)[:100],
+                "headline": result.get("headline", article_title)[:60],
                 "caption": result.get("caption", raw),
             }
         except (json.JSONDecodeError, TypeError):
