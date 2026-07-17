@@ -7,13 +7,13 @@ import requests
 logger = logging.getLogger(__name__)
 
 RSS_FEEDS = [
-    "https://feeds.bbci.co.uk/news/technology/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
-    "https://techcrunch.com/feed/",
-    "https://www.wired.com/feed/rss",
-    "https://feeds.arstechnica.com/arstechnica/index",
-    "http://rss.cnn.com/rss/cnn_topstories.rss",
-    "https://www.theverge.com/rss/index.xml",
+    "https://www.thehindu.com/news/national/?service=rss",
+    "https://indianexpress.com/section/india/feed/",
+    "https://www.hindustantimes.com/feeds/rss/feed.xml",
+    "https://feeds.feedburner.com/ndtvnews-top-stories",
+    "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
+    "https://www.thequint.com/feed",
+    "https://scroll.in/feed/",
 ]
 
 USER_AGENT = "Mozilla/5.0 (compatible; NewsBot/1.0)"

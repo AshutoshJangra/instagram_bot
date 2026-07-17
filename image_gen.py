@@ -287,7 +287,7 @@ def _draw_peach_pink_gradient(draw, x1, x2, y, height=3):
 
 
 def _generate_fallback_bg(post_type):
-    r, g = (40, 20) if post_type == "tech" else (30, 20)
+    r, g = (50, 25) if post_type == "trending" else (50, 25)
     bg = Image.new("RGB", config.IMAGE_SIZE, (r, g, 30))
     draw = ImageDraw.Draw(bg)
     for i in range(config.IMAGE_SIZE[1]):
@@ -314,7 +314,7 @@ def create_post_image(article, headline=None, post_type="tech"):
 
     mx = 70
     RIGHT_MARGIN = 70
-    category = "ON THIS DAY" if post_type == "history" else "TECH"
+    category = "TRENDING"
     PANEL_Y = 720
 
     # ── Draw solid white panel on bottom ──
@@ -328,7 +328,7 @@ def create_post_image(article, headline=None, post_type="tech"):
     # ── Category label (big Anton, black, inside white panel) ──
     font_cat = _load_display_font(80)
     cat_y = PANEL_Y + 35
-    draw.text((mx, cat_y), category, font=font_cat, fill=(255, 230, 60, 255))
+    draw.text((mx, cat_y), category, font=font_cat, fill=(255, 140, 30, 255))
 
     # ── Black accent bar ──
     ay = cat_y + 80

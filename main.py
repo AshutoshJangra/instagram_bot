@@ -7,7 +7,6 @@ from datetime import datetime
 import config
 from image_gen import create_post_image
 from insta_poster import check_publishing_limit, post_to_instagram
-from onthisday_fetcher import fetch_onthisday
 from persona_writer import generate_post
 from rss_fetcher import fetch_tech_news
 
@@ -46,18 +45,6 @@ def _mark_posted(identifier):
     _save_posted(posted)
 
 
-def _pick_event(events, posted):
-    random.shuffle(events)
-    for e in events:
-        key = f"history_{e['year']}_{e['text'][:60]}"
-        if key not in posted:
-            return e, key
-    if events:
-        key = f"history_{events[0]['year']}_{events[0]['text'][:60]}"
-        return events[0], key
-    return None, None
-
-
 def _pick_article(articles, posted):
     random.shuffle(articles)
     for a in articles:
@@ -78,26 +65,26 @@ def main():
     api_key = config.GROQ_API_KEY or os.getenv("GROQ_API_KEY", "")
     if not api_key:
         print("ERROR: GROQ_API_KEY not configured.")
-        print("Get a free key at https://console.groq.com/keys")
-        print("Then set it in config.py or as GROQ_API_KEY environment variable.")
         sys.exit(1)
 
     posted = _load_posted()
 
-    tech_articles = fetch_tech_news(max_articles=20)
-    history_events = fetch_onthisday()
+    articles = fetch_tech_news(max_articles=30)
+    if not articles:
+        print("No articles fetched.")
+        return
 
     posts_to_make = []
 
-    article, art_key = _pick_article(tech_articles, posted)
+    article, art_key = _pick_article(articles, posted)
     if article and art_key:
-        posts_to_make.append(("tech", article, art_key))
-        print(f"\nTech: {article['title'][:70]}")
+        posts_to_make.append(("trending", article, art_key))
+        print(f"\n1: {article['title'][:70]}")
 
-    event, ev_key = _pick_event(history_events, posted)
-    if event and ev_key:
-        posts_to_make.append(("history", event, ev_key))
-        print(f"History: {event['text'][:70]}")
+    article2, art_key2 = _pick_article(articles, posted)
+    if article2 and art_key2 and art_key2 != art_key:
+        posts_to_make.append(("trending", article2, art_key2))
+        print(f"2: {article2['title'][:70]}")
 
     if not posts_to_make:
         print("Nothing new to post.")
@@ -115,7 +102,6 @@ def main():
         print(f"\n--- Posting: {post_type.upper()} ---")
 
         generated = generate_post(
-            topic_type=post_type,
             article_title=source["title"],
             article_description=source.get("description", ""),
             api_key=api_key,
@@ -128,16 +114,16 @@ def main():
 
         image_path = create_post_image(source, headline=headline, post_type=post_type)
         if not image_path:
-            print(f"Image generation failed for {post_type}. Skipping.")
+            print(f"Image generation failed. Skipping.")
             continue
         print(f"Image:   {image_path}")
 
         success = post_to_instagram(source, headline, image_path, caption_body=caption_body)
         if success:
             _mark_posted(key)
-            print(f"Posted:  {post_type}")
+            print(f"Posted!")
         else:
-            print(f"Failed:  {post_type}")
+            print(f"Failed.")
 
     print("\nDone.")
 
