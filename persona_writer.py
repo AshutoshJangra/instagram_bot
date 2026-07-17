@@ -1,51 +1,40 @@
 import json
 import logging
 import random
-import re
 
 logger = logging.getLogger(__name__)
 
-
-def _truncate(text, max_len):
-    if len(text) <= max_len:
-        return text
-    truncated = text[:max_len]
-    last_space = truncated.rfind(" ")
-    if last_space >= max_len * 0.5:
-        truncated = truncated[:last_space]
-    return truncated.rstrip(",. ;-") + "..."
-
-SYSTEM_PROMPT = """You are a satirical Indian socio-political commentator. Your style blends the absurd headline energy of The Fauxy, the relatable desi humor of Nakul Dhull, and the deadpan delivery of The Onion.
+SYSTEM_PROMPT = """You are a satirical Indian socio-political commentator. Your style blends the absurd headline energy of The Fauxy, the relatable humor of Nakul Dhull, and the deadpan delivery of The Onion.
 
 THE VOICE:
-- Write in Indian English with natural Hinglish — yaar, bhai, matlab, literally, basically
-- Deadpan delivery of absolutely ridiculous situations, stated as if completely normal
+- Deadpan delivery of absurd situations, stated as if completely normal
 - Roast ALL sides equally — politicians, corporates, babus, celebrities, everyone
-- Connect big news to everyday Indian struggles: traffic, exams, rent, parents, WhatsApp forwards, chai, chappal
-- Use Indian pop culture references naturally — Bollywood, cricket, TV serials, memes
+- Connect big news to everyday Indian struggles: traffic, exams, rent, parents, WhatsApp forwards
+- Use Indian references naturally — pop culture, cricket, Bollywood, daily life
+- Sharp wit without being mean — punch up, not down
 
 FORMAT:
-- Output ONLY valid JSON with two fields: "headline" and "caption"
-- Headline: exactly 3-6 words, max 45 characters, must fit in 2-3 lines on an image
-- Caption: 2-4 sentences. Start absurd, land the real point. Hinglish flows naturally.
+- Respond ONLY with valid JSON containing two fields: "headline" and "caption"
+- Headline: punchy, concise, works as image overlay text. Keep it tight.
+- Caption: 2-4 sentences, begins with the absurd setup and lands the real point
 
 RULES:
 - No source attribution ("according to reports", "per sources")
-- No hashtags in headline
-- Don't mention brand name
-- Refer to Indian politicians by popular names: Modi, Kejriwal, Rahul, Yogi, Mallikarjun, etc.
-- Punch up, not down. Bold but not cruel.
+- No hashtags anywhere
+- Don't mention the brand name
+- Refer to Indian politicians by popular names: Modi, Kejriwal, Rahul, Yogi, Mallikarjun
 - The satire should speak for itself — don't explain the joke
+- Write in clean English, not Hinglish
 
 EXAMPLES:
-Headline: PM names 3 new schemes after himself
-Caption: 'Modi Health Yojana', 'Modi Education Yojana', and 'Modi Morning Walk Scheme' were unveiled today. Sources say the last one involves PM walking for 10 minutes while 50 cameras follow. Meanwhile, common man still needs 16 documents for a ration card. Matlab, kya bolti company?
+Headline: PM names three new schemes after himself
+Caption: 'Modi Health Yojana', 'Modi Education Yojana', and 'Modi Morning Walk Scheme' were unveiled today. Sources say the last one involves the PM walking for 10 minutes while 50 cameras follow. Meanwhile, the common man still needs sixteen documents for a ration card.
 
 Headline: Delhi smog worse than your WhatsApp forwards
-Caption: AQI crossed 500 and government's solution is a 'Smog Eating Robot' that works only in Lutyens' Delhi. Kejriwal held a press conference, Gopal Rai tweeted 17 times, Supreme Court formed a committee. Meanwhile, Noida folks are selling 'Authentic Delhi Air' in jars for Rs 499. Joke hai bhai, pure desh ka joke.
+Caption: AQI crossed 500 and the government's solution is a 'Smog Eating Robot' that only works in Lutyens' Delhi. Kejriwal held a press conference, Gopal Rai tweeted seventeen times, and the Supreme Court formed another committee. People in Noida are now selling 'Authentic Delhi Air' in jars for Rs 499.
 
-Headline: Govt wants to regulate memes now
-Caption: New bill requires every meme to start with a 15-second government warning. IT Minister says "we want accountability." WhatsApp University has already found 3 loopholes and is now operating in clay pot currency. Economy in shambles."""
+Headline: Government wants to regulate memes
+Caption: A new bill would require every meme to begin with a fifteen-second government warning. The IT Minister says they just want accountability. WhatsApp University has already found three loopholes and is now operating in clay pot currency."""  # noqa: E501
 
 
 def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
@@ -58,6 +47,7 @@ def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
 
     resp = client.chat.completions.create(
         model=model,
+        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
@@ -70,19 +60,28 @@ def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
 
 def _fallback_generation(title_text):
     templates = [
-        f"Big news: {_truncate(title_text, 35)}.",
-        f"So {_truncate(title_text, 40).lower()}.",
-        f"Wait, {_truncate(title_text, 40).lower()}?",
-        f"Brace yourselves: {_truncate(title_text, 40)}.",
+        f"Big news: {title_text[:40].rstrip('.,; ')}.",
+        f"So apparently {title_text[:45].lower().rstrip('.,; ')}, says everyone.",
+        f"Wait, {title_text[:45].lower().rstrip('.,; ')}?",
+        f"Brace yourselves: {title_text[:40].rstrip('.,; ')}.",
     ]
     h = random.choice(templates)
     return {
-        "headline": _truncate(h, 50),
-        "caption": h + " India is the only country where the news writes itself, aur hum yahan baith ke hanste hai.",
+        "headline": h[:55].rstrip(".,; ") + ".",
+        "caption": h + " India is the only country where the news writes itself, and we are just here to laugh so we don't cry.",
     }
 
 
 def _parse_response(raw, article_title):
+    try:
+        result = json.loads(raw)
+        headline = result.get("headline", "").strip()
+        caption = result.get("caption", "").strip()
+        if headline and caption:
+            return {"headline": headline, "caption": caption}
+    except (json.JSONDecodeError, TypeError):
+        pass
+
     lines = raw.strip().split("\n")
     headline = ""
     caption = ""
@@ -93,17 +92,7 @@ def _parse_response(raw, article_title):
             caption = line.split(":", 1)[1].strip()
 
     if headline and caption:
-        return {"headline": _truncate(headline, 50), "caption": caption}
-
-    if not headline and not caption:
-        try:
-            result = json.loads(raw)
-            return {
-                "headline": _truncate(result.get("headline", article_title), 50),
-                "caption": result.get("caption", raw),
-            }
-        except (json.JSONDecodeError, TypeError):
-            pass
+        return {"headline": headline, "caption": caption}
 
     return None
 
@@ -115,12 +104,13 @@ def generate_post(article_title, article_description, api_key=""):
             f"Title: {article_title}\n"
             f"Description: {article_description or 'No description available'}\n"
         )
-        try:
-            raw = _call_groq(prompt, api_key)
-            result = _parse_response(raw, article_title)
-            if result:
-                return result
-        except Exception as e:
-            logger.warning("Groq generation failed: %s — using fallback", e)
+        for attempt in range(2):
+            try:
+                raw = _call_groq(prompt, api_key)
+                result = _parse_response(raw, article_title)
+                if result:
+                    return result
+            except Exception as e:
+                logger.warning("Groq attempt %d failed: %s", attempt + 1, e)
 
     return _fallback_generation(article_title)

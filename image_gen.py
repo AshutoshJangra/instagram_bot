@@ -335,28 +335,21 @@ def create_post_image(article, headline=None, post_type="tech"):
     draw.line([(mx, ay), (mx + 120, ay)], fill=(10, 10, 10, 255), width=8)
 
     # ── Headline (Anton, black, inside white panel) ──
-    font_head = _load_display_font(72)
+    font_head = _load_display_font(60)
     tw = W - mx - RIGHT_MARGIN
     display_text = headline or article.get("title", "")
 
-    if len(display_text) > 55:
-        truncated = display_text[:55]
-        last_space = truncated.rfind(" ")
-        if last_space > 30:
-            truncated = truncated[:last_space]
-        display_text = truncated.rstrip(",. ") + "..."
-
     lines = _wrap_text(display_text, font_head, tw)
     if not lines:
-        lines = [display_text[:45]]
+        lines = [display_text[:50]]
     if len(lines) > config.HEADLINE_MAX_LINES:
         lines = lines[: config.HEADLINE_MAX_LINES]
         last = lines[-1]
         if len(last) > 3:
             lines[-1] = last[:-3].rstrip() + "..."
 
-    lh = 76
-    ty = ay + 35
+    lh = 66
+    ty = ay + 30
     for i, line in enumerate(lines):
         y = ty + i * lh
         draw.text((mx, y), line, font=font_head, fill=(10, 10, 10, 255))
