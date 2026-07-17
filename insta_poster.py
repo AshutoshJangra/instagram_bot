@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 GRAPH_HOST = "https://graph.instagram.com"
 RETRY_DELAY = 60
 MAX_RETRIES = 0
-POST_DELAY = 120
+POST_DELAY = 0
 
 
 def check_publishing_limit():

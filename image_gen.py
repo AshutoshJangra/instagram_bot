@@ -312,10 +312,10 @@ def create_post_image(article, headline=None, post_type="tech"):
     canvas = bg.copy().convert("RGBA")
     draw = ImageDraw.Draw(canvas, "RGBA")
 
-    mx = 160
-    RIGHT_MARGIN = 140
+    mx = 70
+    RIGHT_MARGIN = 70
     category = "ON THIS DAY" if post_type == "history" else "TECH"
-    PANEL_Y = 482
+    PANEL_Y = 720
 
     # ── Draw solid white panel on bottom ──
     draw.rectangle([(0, PANEL_Y), (W, H)], fill=(255, 255, 255, 255))
@@ -326,12 +326,12 @@ def create_post_image(article, headline=None, post_type="tech"):
     draw.text((mx, 22), brand, font=font_brand, fill=(40, 40, 40, 255))
 
     # ── Category label (big Anton, black, inside white panel) ──
-    font_cat = _load_display_font(100)
-    cat_y = PANEL_Y + 50
+    font_cat = _load_display_font(80)
+    cat_y = PANEL_Y + 35
     draw.text((mx, cat_y), category, font=font_cat, fill=(255, 230, 60, 255))
 
     # ── Black accent bar ──
-    ay = cat_y + 100
+    ay = cat_y + 80
     draw.line([(mx, ay), (mx + 120, ay)], fill=(10, 10, 10, 255), width=8)
 
     # ── Headline (Anton, black, inside white panel) ──
@@ -343,8 +343,8 @@ def create_post_image(article, headline=None, post_type="tech"):
         lines = [display_text[:45]]
     lines = lines[: config.HEADLINE_MAX_LINES]
 
-    lh = 75
-    ty = ay + 40
+    lh = 76
+    ty = ay + 35
     for i, line in enumerate(lines):
         y = ty + i * lh
         draw.text((mx, y), line, font=font_head, fill=(10, 10, 10, 255))
