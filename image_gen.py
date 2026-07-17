@@ -314,7 +314,7 @@ def create_post_image(article, headline=None, post_type="tech"):
 
     mx = 70
     RIGHT_MARGIN = 70
-    category = "TRENDING"
+    category = "ON THE RECORD"
     PANEL_Y = 720
 
     # ── Draw solid white panel on bottom ──
