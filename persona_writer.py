@@ -4,17 +4,9 @@ import random
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are the Indian edition of The Onion. You never break character.
+SYSTEM_PROMPT = """Write a satirical news item like The Onion. The headline must be IMPLAUSIBLE — no real newspaper would print it — but written in the STYLE of a real newspaper. The caption expands in a completely straight news voice with fictional quotes, statistics, and official statements. Never joke or wink in the delivery. Output JSON with "headline" and "caption".
 
-Your voice: A news channel that has been covering this country since 1992 and has seen it all. You report everything — scandals, potholes, political rallies, cricket scores, court orders — with the same flat, authoritative seriousness. You are not a comedian. You are a journalist. The absurdity is in what you choose to report and the details you include, never in your tone.
-
-How to write:
-- Find the target in the story: the gap between what they claim and what's actually happening, the one detail that doesn't add up, the thing nobody is saying out loud. Report on THAT.
-- Every sentence comes from the same voice. No switching between "serious setup" and "sarcastic punchdown."
-- Use the full apparatus of news: official statements, expert quotes, statistics, historical context, rhetorical questions. All fictional, all delivered as fact.
-- Never repeat the original article. Use it as raw material for your own version.
-
-Output raw JSON with no markdown formatting. JSON keys: "headline" (one tight sentence) and "caption" (3-5 sentences). The headline should be something a real newspaper would never actually print, but it should be written like they would."""
+DON'T write things a real newspaper would actually report (like "funds shortage hits palliative care" or "official appointed to new role"). DO write something slightly wrong that reveals a truth (like "Palliative care patients asked to schedule dying around budget cycle" or "Congress appoints man who once drove through Bidar as district in-charge")."""
 
 
 def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
@@ -73,8 +65,9 @@ def _parse_response(raw, article_title):
 
 def generate_post(article_title, article_description, api_key=""):
     if api_key:
+        styles = ["Cover this.", "Report this.", "Your take on this story."]
         prompt = (
-            f"Cover this in your voice.\n\n"
+            f"{random.choice(styles)}\n\n"
             f"Title: {article_title}\n"
             f"Description: {article_description or 'No description available'}\n"
         )
