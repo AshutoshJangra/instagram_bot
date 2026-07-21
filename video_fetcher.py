@@ -86,10 +86,11 @@ def _process_for_reel(input_path):
     out = input_path.parent / f"{input_path.stem}_reel.mp4"
     subprocess.run(
         ["ffmpeg", "-y", "-i", str(input_path),
-         "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+         "-vf", "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black",
          "-t", "90",
          "-c:v", "libx264",
-         "-preset", "fast",
+         "-b:v", "8M",
+         "-preset", "medium",
          "-movflags", "+faststart",
          "-c:a", "aac",
          "-b:a", "128k",
