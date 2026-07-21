@@ -106,10 +106,12 @@ def _download_video(url, output_stem):
     opts = {
         "quiet": True,
         "no_warnings": True,
-        "format": "best",
+        "format": "best[height<=720]",
         "outtmpl": temp,
-        "max_filesize": 100 * 1024 * 1024,
+        "max_filesize": 80 * 1024 * 1024,
         "socket_timeout": 30,
+        "retries": 3,
+        "fragment_retries": 3,
     }
     with YoutubeDL(opts) as ydl:
         ydl.download([url])
@@ -129,37 +131,46 @@ def _relevant(videos):
 
 
 def fetch_reel():
-    query = random.choice(QUERIES)
-    logger.info("Searching: %s", query)
-    videos = _search_videos(query, max_results=SEARCH_LIMIT)
+    attempts = 0
+    max_attempts = len(QUERIES) * 2
+    tried = set()
 
-    if not videos:
-        videos = _rss_videos()
+    while attempts < max_attempts:
+        query = random.choice([q for q in QUERIES if q not in tried])
+        tried.add(query)
+        attempts += 1
+        logger.info("Searching: %s", query)
+        videos = _search_videos(query, max_results=SEARCH_LIMIT)
+        if not videos:
+            videos = _rss_videos()
 
-    video = _relevant(videos) if videos else None
-    if not video:
-        logger.warning("No videos found")
-        return None
+        video = _relevant(videos) if videos else None
+        if not video:
+            continue
 
-    logger.info("Selected: %s by %s", video["title"], video["uploader"])
+        logger.info("Selected: %s by %s", video["title"], video["uploader"])
 
-    out = OUTPUT_DIR / f"{video['id']}.mp4"
-    if not out.exists():
-        result = _download_video(video["url"], video["id"])
-        if not result:
-            return None
-        out = result
+        out = OUTPUT_DIR / f"{video['id']}.mp4"
+        if not out.exists():
+            result = _download_video(video["url"], video["id"])
+            if not result:
+                logger.warning("Download failed, trying next video")
+                continue
+            out = result
 
-    reel_path = OUTPUT_DIR / f"{video['id']}_reel.mp4"
-    if not reel_path.exists():
-        logger.info("Processing for Reel format...")
-        reel_path = _process_for_reel(out)
+        reel_path = OUTPUT_DIR / f"{video['id']}_reel.mp4"
+        if not reel_path.exists():
+            logger.info("Processing for Reel format...")
+            reel_path = _process_for_reel(out)
 
-    return {
-        "video_path": str(reel_path),
-        "title": video["title"],
-        "source": video["uploader"],
-    }
+        return {
+            "video_path": str(reel_path),
+            "title": video["title"],
+            "source": video["uploader"],
+        }
+
+    logger.warning("No videos found after %d attempts", attempts)
+    return None
 
 
 if __name__ == "__main__":
