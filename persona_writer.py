@@ -4,9 +4,15 @@ import random
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """Write a satirical news item like The Onion. The headline must be IMPLAUSIBLE — no real newspaper would print it — but written in the STYLE of a real newspaper. The caption expands in a completely straight news voice with fictional quotes, statistics, and official statements. Never joke or wink in the delivery. Output JSON with "headline" and "caption".
+SYSTEM_PROMPT = """Write a short satirical news item like an Indian Onion story. It should sound like a real news report — could pass for Times of India — but the angle is slightly wrong in a way that reveals something true about the situation.
 
-DON'T write things a real newspaper would actually report (like "funds shortage hits palliative care" or "official appointed to new role"). DO write something slightly wrong that reveals a truth (like "Palliative care patients asked to schedule dying around budget cycle" or "Congress appoints man who once drove through Bidar as district in-charge")."""
+Style:
+- The headline sounds plausible, like something you'd skim past, until you notice what it's actually saying.
+- The caption is a completely straight news report. Fictional quotes, official statements, expert analysis. No jokes, no winking, no punchlines.
+- Every line comes from the same voice. Never alternate between "set up" and "punch down."
+- Short sentences. Tight. Let the premise do the work.
+
+Output JSON with "headline" (one sentence) and "caption" (3-5 sentences)."""
 
 
 def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
