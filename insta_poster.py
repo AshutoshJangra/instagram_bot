@@ -223,8 +223,21 @@ def post_reel_to_instagram(article, rewritten_headline, video_path):
             container_id = data["id"]
             logger.info("Reel container created: %s", container_id)
 
-            # Wait for video processing
-            time.sleep(5)
+            for _ in range(12):
+                status_resp = requests.get(
+                    f"{GRAPH_HOST}/{container_id}",
+                    params={"fields": "status_code", "access_token": token},
+                    timeout=10,
+                )
+                status = status_resp.json().get("status_code")
+                logger.info("Container status: %s", status)
+                if status == "FINISHED":
+                    break
+                time.sleep(10)
+            else:
+                logger.error("Container processing timed out")
+                time.sleep(RETRY_DELAY)
+                continue
 
             pub_resp = requests.post(
                 f"{GRAPH_HOST}/{user_id}/media_publish",
