@@ -162,23 +162,28 @@ def post_to_instagram(article, rewritten_headline, image_path, caption_body=""):
 
 
 def _upload_video(video_path):
-    try:
-        with open(video_path, "rb") as f:
-            resp = requests.post(
-                "https://catbox.moe/user/api.php",
-                data={"reqtype": "fileupload"},
-                files={"fileToUpload": f},
-                timeout=120,
-            )
-        if resp.status_code == 200:
-            url = resp.text.strip()
-            logger.info("Video uploaded: %s", url)
-            return url
-        logger.error("Video upload failed: %s", resp.text)
-        return None
-    except Exception as e:
-        logger.error("Video upload error: %s", e)
-        return None
+    import time
+    hosts = [
+        "https://0x0.st",
+        "https://temp.sh/upload",
+    ]
+    for host in hosts:
+        try:
+            with open(video_path, "rb") as f:
+                resp = requests.post(
+                    host,
+                    files={"file": f},
+                    timeout=120,
+                )
+            if resp.status_code == 200:
+                url = resp.text.strip()
+                logger.info("Video uploaded to %s: %s", host, url)
+                return url
+            logger.warning("%s returned %d: %s", host, resp.status_code, resp.text[:100])
+        except Exception as e:
+            logger.warning("Video upload failed to %s: %s", host, e)
+        time.sleep(1)
+    return None
 
 
 def post_reel_to_instagram(article, rewritten_headline, video_path):

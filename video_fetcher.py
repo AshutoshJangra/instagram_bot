@@ -12,11 +12,27 @@ OUTPUT_DIR = Path("_reel_temp")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 REEL_MAX_DURATION = 300
+SEARCH_LIMIT = 3
+
+KEYWORDS = [
+    "protest", "congress", "bjp", "modi", "delhi", "parliament",
+    "india", "news", "police", "supreme court", "government",
+    "politics", "rahul", "cjp", "cockroach", "election",
+]
 
 CHANNELS = [
     ("UCZFMm1mMw0F81Z37aaEzTUA", "NDTV"),
     ("UC1ZQ7YuGJixgGcN0jlUaO-g", "India Today"),
     ("UCxPpLDcP_WrDzC8S0YiGR3A", "Times Now"),
+]
+
+QUERIES = [
+    "cjp protest india",
+    "cockroach party india",
+    "india protest today",
+    "delhi protest",
+    "breaking news india today",
+    "congress protest",
 ]
 
 
@@ -84,23 +100,26 @@ def _download_video(url, output_stem):
     return None
 
 
+def _relevant(videos):
+    for v in videos:
+        t = v["title"].lower()
+        if any(kw in t for kw in KEYWORDS):
+            return v
+    return videos[0] if videos else None
+
+
 def fetch_reel():
-    videos = _rss_videos()
-    if videos:
-        random.shuffle(videos)
-        video = videos[0]
-    else:
-        queries = [
-            "cjp protest india", "cockroach party india",
-            "india trending news", "breaking news india today",
-        ]
-        query = random.choice(queries)
-        logger.info("RSS empty, searching: %s", query)
-        videos = _search_videos(query)
-        if not videos:
-            logger.warning("No videos found")
-            return None
-        video = videos[0]
+    query = random.choice(QUERIES)
+    logger.info("Searching: %s", query)
+    videos = _search_videos(query, max_results=SEARCH_LIMIT)
+
+    if not videos:
+        videos = _rss_videos()
+
+    video = _relevant(videos) if videos else None
+    if not video:
+        logger.warning("No videos found")
+        return None
 
     logger.info("Selected: %s by %s", video["title"], video["uploader"])
 
