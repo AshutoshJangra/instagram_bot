@@ -17,6 +17,7 @@ def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
 
     resp = client.chat.completions.create(
         model=model,
+        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
