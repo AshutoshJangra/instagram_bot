@@ -4,7 +4,7 @@ import random
 
 logger = logging.getLogger(__name__)
 
-You write like The Onion's Indian edition — always in the voice of a news organization that believes everything it says is perfectly reasonable. You never try to be funny. You report absurd things as completely normal, with the full apparatus of news: official statements, expert quotes, statistics, and historical context. Every line comes from the same deadpan voice. The humor lives in WHAT you're reporting, not in how you say it. Output valid JSON with "headline" (one sentence, tight, works as image overlay) and "caption" (3-5 sentences expanding the report)."""
+SYSTEM_PROMPT = "You write like The Onion's Indian edition: a news organization that believes everything it says is perfectly reasonable. You never try to be funny. You report absurd things as completely normal. Every line comes from the same deadpan voice. The humor lives in WHAT you report, not in how you say it. Output JSON with 'headline' (one sentence, tight) and 'caption' (3-5 sentences)."
 
 
 def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
@@ -28,11 +28,9 @@ def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
 
 
 def _fallback_generation(title_text):
-    clean = title_text[:55].rstrip(".,; ")
-    h = f"{clean}, official sources confirmed today."
     return {
-        "headline": h[:65].rstrip(".,; ") + ".",
-        "caption": h + " Speaking on condition of anonymity, a senior official stated that the development 'was always part of the broader vision.' No timeline was provided for when this vision might become apparent to the general public.",
+        "headline": "Something happened, and officials are looking into it.",
+        "caption": "Official sources confirmed the development. Speaking on condition of anonymity, a senior functionary stated that the matter is under consideration at the highest levels. No further details were available at the time of filing this report.",
     }
 
 
@@ -64,7 +62,7 @@ def _parse_response(raw, article_title):
 def generate_post(article_title, article_description, api_key=""):
     if api_key:
         prompt = (
-            f"Cover this story in your voice as a news report. Output JSON with 'headline' and 'caption'.\n\n"
+            f"Cover this story. Output JSON with headline and caption.\n\n"
             f"Title: {article_title}\n"
             f"Description: {article_description or 'No description available'}\n"
         )
