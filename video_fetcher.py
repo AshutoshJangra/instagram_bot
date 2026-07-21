@@ -81,6 +81,23 @@ def _search_videos(query, max_results=5):
         return videos
 
 
+def _process_for_reel(input_path):
+    out = input_path.parent / f"{input_path.stem}_reel.mp4"
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(input_path),
+         "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+         "-t", "90",
+         "-c:v", "libx264",
+         "-preset", "fast",
+         "-c:a", "aac",
+         "-b:a", "128k",
+         "-pix_fmt", "yuv420p",
+         str(out)],
+        capture_output=True,
+    )
+    return out if out.exists() else input_path
+
+
 def _download_video(url, output_stem):
     temp = str(OUTPUT_DIR / f"{output_stem}.%(ext)s")
     opts = {
@@ -130,8 +147,13 @@ def fetch_reel():
             return None
         out = result
 
+    reel_path = OUTPUT_DIR / f"{video['id']}_reel.mp4"
+    if not reel_path.exists():
+        logger.info("Processing for Reel format...")
+        reel_path = _process_for_reel(out)
+
     return {
-        "video_path": str(out),
+        "video_path": str(reel_path),
         "title": video["title"],
         "source": video["uploader"],
     }
