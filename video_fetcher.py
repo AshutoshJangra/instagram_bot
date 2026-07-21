@@ -1,5 +1,6 @@
 import logging
 import random
+import subprocess
 from pathlib import Path
 
 import feedparser
@@ -89,6 +90,7 @@ def _process_for_reel(input_path):
          "-t", "90",
          "-c:v", "libx264",
          "-preset", "fast",
+         "-movflags", "+faststart",
          "-c:a", "aac",
          "-b:a", "128k",
          "-pix_fmt", "yuv420p",

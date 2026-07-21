@@ -164,24 +164,25 @@ def post_to_instagram(article, rewritten_headline, image_path, caption_body=""):
 def _upload_video(video_path):
     import time
     hosts = [
-        "https://0x0.st",
-        "https://temp.sh/upload",
+        ("https://uguu.se/upload", {"name": "file"}),
+        ("https://temp.sh/upload", {"name": "file"}),
     ]
-    for host in hosts:
+    for url, field in hosts:
         try:
             with open(video_path, "rb") as f:
                 resp = requests.post(
-                    host,
-                    files={"file": f},
-                    timeout=120,
+                    url,
+                    files={field["name"]: f},
+                    timeout=180,
                 )
             if resp.status_code == 200:
-                url = resp.text.strip()
-                logger.info("Video uploaded to %s: %s", host, url)
+                data = resp.json()
+                url = data.get("files", [{}])[0].get("url") or resp.text.strip()
+                logger.info("Video uploaded: %s", url)
                 return url
-            logger.warning("%s returned %d: %s", host, resp.status_code, resp.text[:100])
+            logger.warning("%s returned %d: %s", url, resp.status_code, resp.text[:100])
         except Exception as e:
-            logger.warning("Video upload failed to %s: %s", host, e)
+            logger.warning("Video upload failed to %s: %s", url, e)
         time.sleep(1)
     return None
 
