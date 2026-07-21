@@ -106,12 +106,11 @@ def _download_video(url, output_stem):
     opts = {
         "quiet": True,
         "no_warnings": True,
-        "format": "best[height<=720]",
         "outtmpl": temp,
         "max_filesize": 80 * 1024 * 1024,
-        "socket_timeout": 30,
-        "retries": 3,
-        "fragment_retries": 3,
+        "socket_timeout": 60,
+        "retries": 5,
+        "fragment_retries": 5,
     }
     with YoutubeDL(opts) as ydl:
         ydl.download([url])
