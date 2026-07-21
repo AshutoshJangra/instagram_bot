@@ -14,7 +14,7 @@ How to write:
 - Use the full apparatus of news: official statements, expert quotes, statistics, historical context, rhetorical questions. All fictional, all delivered as fact.
 - Never repeat the original article. Use it as raw material for your own version.
 
-Output JSON with "headline" (one tight sentence, reads like a TOI headline) and "caption" (3-5 sentences in the same voice)."""
+Output raw JSON with no markdown formatting. JSON keys: "headline" (one tight sentence) and "caption" (3-5 sentences). The headline should be something a real newspaper would never actually print, but it should be written like they would."""
 
 
 def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
@@ -27,7 +27,6 @@ def _call_groq(prompt, api_key, model="llama-3.3-70b-versatile"):
 
     resp = client.chat.completions.create(
         model=model,
-        response_format={"type": "json_object"},
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt},
@@ -46,16 +45,20 @@ def _fallback_generation(title_text):
 
 
 def _parse_response(raw, article_title):
+    import re
+    text = raw.strip()
+    code_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if code_match:
+        text = code_match.group(1)
     try:
-        result = json.loads(raw)
+        result = json.loads(text)
         headline = result.get("headline", "").strip()
         caption = result.get("caption", "").strip()
         if headline and caption:
             return {"headline": headline, "caption": caption}
     except (json.JSONDecodeError, TypeError):
         pass
-
-    lines = raw.strip().split("\n")
+    lines = text.split("\n")
     headline = ""
     caption = ""
     for line in lines:
@@ -63,17 +66,15 @@ def _parse_response(raw, article_title):
             headline = line.split(":", 1)[1].strip()
         elif line.lower().startswith("caption:"):
             caption = line.split(":", 1)[1].strip()
-
     if headline and caption:
         return {"headline": headline, "caption": caption}
-
     return None
 
 
 def generate_post(article_title, article_description, api_key=""):
     if api_key:
         prompt = (
-            f"Cover this in your voice. Find the target.\n\n"
+            f"Cover this in your voice.\n\n"
             f"Title: {article_title}\n"
             f"Description: {article_description or 'No description available'}\n"
         )
